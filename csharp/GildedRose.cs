@@ -4,6 +4,12 @@ namespace csharp
 {
     public class GildedRose
     {
+       private const int maxThreshold = 50;
+       private const string BackstagePasses = "Backstage passes to a TAFKAL80ETC concert";
+       private const string AgedBrie = "Aged Brie";
+       private const string SulfurasHandOfRagnaros = "Sulfuras, Hand of Ragnaros";
+       private const string ConjuredManaCake = "Conjured Mana Cake";
+
         IList<Item> Items;
         public GildedRose(IList<Item> Items)
         {
@@ -12,78 +18,76 @@ namespace csharp
 
         public void UpdateQuality()
         {
-            for (var i = 0; i < Items.Count; i++)
+            foreach (var item in Items)
             {
-                if (Items[i].Name != "Aged Brie" && Items[i].Name != "Backstage passes to a TAFKAL80ETC concert")
-                {
-                    if (Items[i].Quality > 0)
-                    {
-                        if (Items[i].Name != "Sulfuras, Hand of Ragnaros")
-                        {
-                            Items[i].Quality = Items[i].Quality - 1;
-                        }
-                    }
-                }
-                else
-                {
-                    if (Items[i].Quality < 50)
-                    {
-                        Items[i].Quality = Items[i].Quality + 1;
+                UpdateQualityWithinSellByDate(item);
 
-                        if (Items[i].Name == "Backstage passes to a TAFKAL80ETC concert")
-                        {
-                            if (Items[i].SellIn < 11)
-                            {
-                                if (Items[i].Quality < 50)
-                                {
-                                    Items[i].Quality = Items[i].Quality + 1;
-                                }
-                            }
+                if (item.Name != SulfurasHandOfRagnaros)
+                    item.SellIn--;
 
-                            if (Items[i].SellIn < 6)
-                            {
-                                if (Items[i].Quality < 50)
-                                {
-                                    Items[i].Quality = Items[i].Quality + 1;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (Items[i].Name != "Sulfuras, Hand of Ragnaros")
-                {
-                    Items[i].SellIn = Items[i].SellIn - 1;
-                }
-
-                if (Items[i].SellIn < 0)
-                {
-                    if (Items[i].Name != "Aged Brie")
-                    {
-                        if (Items[i].Name != "Backstage passes to a TAFKAL80ETC concert")
-                        {
-                            if (Items[i].Quality > 0)
-                            {
-                                if (Items[i].Name != "Sulfuras, Hand of Ragnaros")
-                                {
-                                    Items[i].Quality = Items[i].Quality - 1;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Items[i].Quality = Items[i].Quality - Items[i].Quality;
-                        }
-                    }
-                    else
-                    {
-                        if (Items[i].Quality < 50)
-                        {
-                            Items[i].Quality = Items[i].Quality + 1;
-                        }
-                    }
-                }
+                if (item.SellIn < 0)
+                    UpdateQualityOutOfSellByDate(item);
             }
+         
+        }
+        private void UpdateQualityWithinSellByDate(Item item)
+        {
+            switch (item.Name)
+            {
+                case AgedBrie:
+                    IncreaseQuality(item);
+                    break;
+                case BackstagePasses:
+                    IncreaseQuality(item);
+                    HandleBackstagePass(item);
+                    break;
+                case SulfurasHandOfRagnaros:
+                    break;
+                case ConjuredManaCake:
+                    DecreaseQuality(item, 2);
+                    break;
+                default:
+                    if (item.Quality > 0)
+                        DecreaseQuality(item);
+                    break;
+            }
+        }
+        private void UpdateQualityOutOfSellByDate(Item item)
+        {
+            switch (item.Name)
+            {
+                case AgedBrie:
+                    IncreaseQuality(item);
+                    break;
+                case BackstagePasses:
+                    item.Quality = 0;
+                    break;
+                case SulfurasHandOfRagnaros:
+                    break;
+                case ConjuredManaCake:
+                    DecreaseQuality(item, 2);
+                    break;
+                default:
+                    if (item.Quality > 0)
+                        DecreaseQuality(item);
+                    break;
+            }
+        }
+        private void DecreaseQuality(Item item, int qualityDecrease = 1)
+        {
+            item.Quality -= qualityDecrease;
+        }
+        private void HandleBackstagePass(Item item)
+        {
+            if (item.SellIn < 11 && item.SellIn >= 6)
+                IncreaseQuality(item);
+
+            else if (item.SellIn < 6)
+                IncreaseQuality(item, 2);
+        }
+        private void IncreaseQuality(Item item, int qualityIncrease = 1)
+        {
+            item.Quality = System.Math.Min(maxThreshold, item.Quality + qualityIncrease);
         }
     }
 }
